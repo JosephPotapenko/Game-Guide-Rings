@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ring Guide Studio</title>
+<style>
+:root{--ink:#24170f;--wood:#2a1b12;--wood2:#3b2618;--gold:#c79a57;--paper:#e6cf9e;--panel:#17100c;--muted:#a9947d;--accent:#d9b36b}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at 50% 0,#4c3322,#17100c 70%);color:#f4ead9;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;min-height:100vh}
+.app{display:grid;grid-template-columns:330px 1fr;min-height:100vh}.sidebar{background:linear-gradient(180deg,#342218,#1d130d);border-right:1px solid #63442b;padding:20px;position:sticky;top:0;height:100vh;overflow:auto}.brand{font-family:Georgia,serif;letter-spacing:.08em;font-size:20px;color:#f2d49a}.brand small{display:block;font:12px/1.4 Inter,sans-serif;color:#bca58b;letter-spacing:0;margin-top:5px}.section{border-top:1px solid #5b3e29;padding-top:16px;margin-top:18px}.section h3{font:700 12px Inter,sans-serif;text-transform:uppercase;letter-spacing:.14em;color:#c9ae87;margin:0 0 10px}.row{display:flex;gap:8px}.btn,.filelabel{border:1px solid #705037;background:linear-gradient(#493020,#302016);color:#f6e8d0;border-radius:8px;padding:10px 12px;font-weight:700;cursor:pointer;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:7px}.btn:hover,.filelabel:hover{border-color:#a57949;background:#513522}.btn.primary{background:linear-gradient(#b58a4d,#7d5b32);color:#1d120b;border-color:#d3aa69}.btn.danger{color:#f2b5a5}.btn.small{padding:7px 9px;font-size:12px}.field{margin:9px 0}.field label{display:block;font-size:11px;color:#bca58b;margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em}.field input,.field textarea,.field select{width:100%;background:#19100b;border:1px solid #61452f;color:#f6ead7;border-radius:7px;padding:9px;font:13px Inter,sans-serif;outline:none}.field textarea{min-height:66px;resize:vertical}.dropzone{border:1px dashed #8d6946;border-radius:9px;padding:14px;text-align:center;color:#bca58b;font-size:12px;background:#24170f}.library{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.thumb{aspect-ratio:1;border:1px solid #5d402a;background:#120b08;border-radius:7px;overflow:hidden;cursor:grab;position:relative}.thumb img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.thumb span{position:absolute;left:3px;right:3px;bottom:3px;background:#000a;color:#fff;font-size:8px;padding:2px 3px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.empty{font-size:11px;color:#8e7965;text-align:center;padding:14px 4px;grid-column:1/-1}.main{padding:26px;min-width:0}.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}.topbar h1{font:700 26px Georgia,serif;margin:0;color:#f2dfbd}.actions{display:flex;gap:8px;flex-wrap:wrap}.workspace{display:flex;justify-content:center;align-items:flex-start;gap:24px}.stage{background:#0e0906;border:1px solid #6b4a30;border-radius:14px;padding:16px;box-shadow:0 20px 60px #0009;max-width:min(850px,calc(100vw - 380px));overflow:auto}.canvas-wrap{position:relative;width:1024px;height:1536px;transform-origin:top left;background:#111;box-shadow:0 0 0 1px #6b4a30}.canvas-wrap img.template{position:absolute;inset:0;width:1024px;height:1536px;user-select:none}.slot{position:absolute;width:448px;height:226px;border:1px solid transparent;border-radius:10px;transition:.15s;z-index:5}.slot.dragover{border:2px dashed #e3bc75;background:#e3bc7520}.slot.dragging{opacity:.45}.ring-img{position:absolute;left:20px;top:19px;width:150px;height:150px;object-fit:contain;image-rendering:auto;cursor:grab;filter:drop-shadow(0 3px 2px #0005)}.slot .remove{position:absolute;left:10px;top:7px;z-index:4;background:#27150e;border:1px solid #7b4d34;color:#f2d4b0;border-radius:50%;width:20px;height:20px;line-height:17px;padding:0;cursor:pointer;display:none}.slot:hover .remove{display:block}.slot input,.slot textarea{position:absolute;left:188px;width:238px;background:transparent;border:0;outline:0;color:#301b0e;font-family:Georgia,serif}.slot .name{top:23px;font-size:22px;font-weight:700;height:31px}.slot .effect{top:73px;height:55px;font-size:16px;line-height:1.15;resize:none}.slot .hint{top:137px;height:60px;font-size:15px;font-style:italic;line-height:1.15;resize:none}.slot input::placeholder,.slot textarea::placeholder{color:#6b4b31;opacity:.42}.slot[data-col="1"]{left:526px}.slot[data-col="0"]{left:49px}.slot[data-row="0"]{top:252px}.slot[data-row="1"]{top:499px}.slot[data-row="2"]{top:746px}.slot[data-row="3"]{top:993px}.slot[data-row="4"]{top:1240px}.sideinfo{width:260px;color:#bca58b;font-size:12px}.card{background:#24170f;border:1px solid #5f432d;border-radius:10px;padding:14px;margin-bottom:12px}.card h3{font:700 12px Inter,sans-serif;text-transform:uppercase;letter-spacing:.12em;color:#d4b17b;margin:0 0 9px}.status{font-size:11px;line-height:1.5}.draft-list{display:flex;flex-direction:column;gap:7px}.draft{border:1px solid #4e3726;border-radius:7px;padding:8px;background:#1a100b;display:flex;justify-content:space-between;gap:8px;align-items:center}.draft b{font-size:12px;color:#ead7ba}.draft small{display:block;color:#8f7964;margin-top:2px}.draft button{background:none;border:0;color:#d9b36b;cursor:pointer}.kbd{font-family:ui-monospace,monospace;border:1px solid #705037;border-bottom-width:2px;padding:1px 4px;border-radius:4px;color:#d9c29f}.notice{padding:9px;border-radius:7px;background:#3b291b;border:1px solid #725335;color:#ddc6a4;font-size:11px;line-height:1.45}
+@media(max-width:1150px){.app{grid-template-columns:290px 1fr}.main{padding:16px}.stage{max-width:calc(100vw - 330px)}.sideinfo{display:none}}
+@media(max-width:760px){.app{display:block}.sidebar{position:relative;height:auto}.main{padding:10px}.stage{max-width:100%;overflow:auto}.topbar{align-items:flex-start;flex-direction:column}.canvas-wrap{transform:scale(.62);margin-bottom:-580px;margin-right:-389px}.stage{height:990px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">RING GUIDE STUDIO<small>Static player's-guide page builder</small></div>
+  <div class="section">
+    <h3>Page</h3>
+    <div class="field"><label>Template</label><select id="templateSelect"></select></div>
+    <div class="row"><button class="btn small" id="uploadTemplateBtn">Upload template</button><input id="templateFiles" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></div>
+    <div class="field"><label>Page number</label><input id="pageNumber" placeholder="e.g. 12"></div>
+    <div class="row"><button class="btn small" id="clearPage">Clear page</button><button class="btn small" id="fitStage">Fit page</button></div>
+  </div>
+  <div class="section">
+    <h3>Ring library</h3>
+    <div id="ringDrop" class="dropzone">Drop ring images here, or click Select Rings.<br>Images fill empty slots automatically.</div>
+    <div class="row" style="margin-top:8px"><button class="btn primary" id="selectRings">Select Rings</button><input id="ringFiles" type="file" accept="image/*" multiple hidden></div>
+    <div id="library" class="library"></div>
+  </div>
+  <div class="section">
+    <h3>Drafts</h3>
+    <div class="field"><label>Draft name</label><input id="draftName" placeholder="David — Story Rings"></div>
+    <div class="row"><button class="btn primary" id="saveDraft">Save draft</button><button class="btn" id="newDraft">New</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="exportDraft">Export draft</button><button class="btn small" id="importDraft">Import draft</button><input id="draftFile" type="file" accept="application/json" hidden></div>
+    <div id="draftList" class="draft-list" style="margin-top:9px"></div>
+  </div>
+  <div class="section">
+    <h3>Output</h3>
+    <button class="btn primary" id="downloadPng" style="width:100%">Download PNG</button>
+    <div class="notice" style="margin-top:9px">Exports at exactly <b>1024 × 1536 px</b>, regardless of the size used to view the editor.</div>
+  </div>
+  <div class="section">
+    <div class="notice"><b>Drag & drop:</b> drag a ring from the library onto any empty slot. Drag a filled slot onto another filled slot to swap their placements.</div>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar"><div><h1 id="pageTitle">Story &amp; Progression Rings</h1><div id="pageStatus" class="status">10 editable entries · 1024 × 1536 export</div></div><div class="actions"><button class="btn" id="undo">Undo</button><button class="btn" id="redo">Redo</button></div></div>
+  <div class="workspace">
+    <div class="stage" id="stage"><div class="canvas-wrap" id="canvasWrap"><img id="templateImg" class="template" draggable="false"></div></div>
+    <div class="sideinfo"><div class="card"><h3>Editing</h3><div>• Type directly into each name, effect, and hint field.<br>• Ring art is never redrawn; the uploaded image is used as-is.<br>• Slot order is preserved in drafts.</div></div><div class="card"><h3>Keyboard</h3><div><span class="kbd">Ctrl/Cmd + S</span> save draft<br><span class="kbd">Esc</span> clear active drag</div></div><div class="card"><h3>Draft storage</h3><div id="storageNote">Drafts are saved in this browser.</div></div></div>
+  </div>
+</main>
+</div>
+<script>
+const BUILTIN={
+ story:{label:'Story & Progression Rings',src:'assets/templates/story.png'},
+ found:{label:'Found & Hidden Rings',src:'assets/templates/found.png'},
+ achievements:{label:'Achievement Rings',src:'assets/templates/achievements.png'},
+ purchased:{label:'Purchased & Traded Rings',src:'assets/templates/purchased.png'}
+};
+const SLOTS=10;
+let state={template:'story',pageNumber:'',slots:Array.from({length:SLOTS},()=>({image:null,name:'',effect:'',hint:''})),library:[],draftName:''};
+let activeDraftId=null;
+let history=[], future=[];
+const $=id=>document.getElementById(id);
+function snapshot(){return JSON.stringify(state)}
+function pushHistory(){history.push(snapshot()); if(history.length>30)history.shift(); future=[]}
+function restore(s){state=JSON.parse(s); render()}
+function dataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+function imgDims(url){return new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.src=url})}
+function renderTemplateOptions(){const sel=$('templateSelect');sel.innerHTML='';Object.entries(BUILTIN).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.textContent=v.label;sel.appendChild(o)}); sel.value=state.template}
+function render(){
+ renderTemplateOptions();
+ const t=BUILTIN[state.template]||state.template; $('templateImg').src=t.src||t.data;
+ $('pageNumber').value=state.pageNumber||''; $('draftName').value=state.draftName||'';
+ $('pageTitle').textContent=(t.label||'Ring Guide Page').replace(' Rings',' Rings');
+ $('canvasWrap').querySelectorAll('.slot').forEach(e=>e.remove());
+ state.slots.forEach((s,i)=>makeSlot(s,i)); renderLibrary();
+}
+function makeSlot(s,i){
+ const el=document.createElement('div');el.className='slot';el.dataset.i=i;el.dataset.row=Math.floor(i/2);el.dataset.col=i%2;el.draggable=true;
+ el.addEventListener('dragstart',e=>{el.classList.add('dragging');e.dataTransfer.setData('text/plain','slot:'+i)});el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+ el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('dragover')});el.addEventListener('dragleave',()=>el.classList.remove('dragover'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('dragover');const d=e.dataTransfer.getData('text/plain');if(d.startsWith('lib:')){const libraryIndex=+d.slice(4),ring=state.library[libraryIndex];if(!ring)return;pushHistory();const displaced=state.slots[i].image;state.slots[i].image=ring.data;state.library.splice(libraryIndex,1);if(displaced)state.library.push({name:'Displaced ring',data:displaced});render();return}if(d.startsWith('slot:')){const j=+d.slice(5);if(j!==i){pushHistory();[state.slots[i],state.slots[j]]=[state.slots[j],state.slots[i]];render()}}});
+ const rm=document.createElement('button');rm.className='remove';rm.textContent='×';rm.title='Remove ring';rm.onclick=()=>{pushHistory();state.slots[i].image=null;render()};el.appendChild(rm);
+ if(s.image){const im=document.createElement('img');im.className='ring-img';im.src=s.image;im.draggable=false;el.appendChild(im)}
+ const n=document.createElement('input');n.className='name';n.placeholder='Ring name';n.value=s.name;n.addEventListener('input',()=>state.slots[i].name=n.value);el.appendChild(n);
+ const ef=document.createElement('textarea');ef.className='effect';ef.placeholder='Effect description';ef.value=s.effect;ef.addEventListener('input',()=>state.slots[i].effect=ef.value);el.appendChild(ef);
+ const hi=document.createElement('textarea');hi.className='hint';hi.placeholder='Hint / how to obtain it';hi.value=s.hint;hi.addEventListener('input',()=>state.slots[i].hint=hi.value);el.appendChild(hi);
+ $('canvasWrap').appendChild(el)
+}
+function renderLibrary(){const lib=$('library');lib.innerHTML='';if(!state.library.length){lib.innerHTML='<div class="empty">No unused ring images yet.</div>';return}state.library.forEach((r,i)=>{const d=document.createElement('div');d.className='thumb';d.draggable=true;d.title=r.name;d.innerHTML=`<img src="${r.data}"><span>${esc(r.name)}</span>`;d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain','lib:'+i));d.addEventListener('dblclick',()=>{const empty=state.slots.findIndex(s=>!s.image);if(empty>=0){pushHistory();state.slots[empty].image=r.data;state.library.splice(i,1);render()}});lib.appendChild(d)})}
+async function addFiles(files){const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));for(const f of arr){const data=await dataUrl(f);state.library.push({name:f.name,data});}autoPlace();render()}
+function autoPlace(){let li=0;for(let i=0;i<SLOTS && li<state.library.length;i++){if(!state.slots[i].image){state.slots[i].image=state.library[li].data;state.library.splice(li,1); }else li++}}
+$('selectRings').onclick=()=>{pushHistory();$('ringFiles').click()};$('ringFiles').onchange=async e=>{await addFiles(e.target.files);e.target.value=''};
+$('ringDrop').ondragover=e=>{e.preventDefault();$('ringDrop').style.borderColor='#d9b36b'};$('ringDrop').ondragleave=()=>$('ringDrop').style.borderColor='';$('ringDrop').ondrop=async e=>{e.preventDefault();$('ringDrop').style.borderColor='';pushHistory();await addFiles(e.dataTransfer.files)};
+$('uploadTemplateBtn').onclick=()=>$('templateFiles').click();$('templateFiles').onchange=async e=>{for(const f of e.target.files){const data=await dataUrl(f);const key='custom_'+Date.now();BUILTIN[key]={label:f.name.replace(/\.[^.]+$/,''),data};state.template=key}render()};
+$('templateSelect').onchange=e=>{pushHistory();state.template=e.target.value;render()};$('pageNumber').oninput=e=>state.pageNumber=e.target.value;$('draftName').oninput=e=>state.draftName=e.target.value;
+$('clearPage').onclick=()=>{pushHistory();state.slots=Array.from({length:SLOTS},()=>({image:null,name:'',effect:'',hint:''}));render()};
+$('newDraft').onclick=()=>{if(confirm('Start a blank draft? Unsaved changes will remain only if already saved.')){pushHistory();activeDraftId=null;state={template:'story',pageNumber:'',slots:Array.from({length:SLOTS},()=>({image:null,name:'',effect:'',hint:''})),library:[],draftName:''};render()}};
+$('undo').onclick=()=>{if(history.length){future.push(snapshot());restore(history.pop())}};$('redo').onclick=()=>{if(future.length){history.push(snapshot());restore(future.pop())}};
+window.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();saveDraft()}});
+const DB='ring-guide-drafts-v1';
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function saveDraft(){const db=await openDB();const id=activeDraftId||crypto.randomUUID();const d={id,name:state.draftName||'Untitled draft',saved:new Date().toISOString(),state:JSON.parse(snapshot())};const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(d);tx.oncomplete=()=>{activeDraftId=id;renderDrafts();alert('Draft saved in this browser.')}}
+async function renderDrafts(){const db=await openDB();const tx=db.transaction('drafts','readonly');const req=tx.objectStore('drafts').getAll();req.onsuccess=()=>{const list=$('draftList');list.innerHTML='';req.result.sort((a,b)=>b.saved.localeCompare(a.saved)).forEach(d=>{const el=document.createElement('div');el.className='draft';el.innerHTML=`<div><b>${esc(d.name)}</b><small>${new Date(d.saved).toLocaleString()}</small></div><div><button title="Open">Open</button><button title="Delete">×</button></div>`;el.querySelectorAll('button')[0].onclick=()=>{pushHistory();state=d.state;activeDraftId=d.id;render()};el.querySelectorAll('button')[1].onclick=async()=>{if(confirm('Delete this draft?')){const deleteTx=db.transaction('drafts','readwrite');deleteTx.objectStore('drafts').delete(d.id);deleteTx.oncomplete=()=>{if(activeDraftId===d.id)activeDraftId=null;renderDrafts()}}};list.appendChild(el)})}}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('saveDraft').onclick=saveDraft;
+$('exportDraft').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,app:'Ring Guide Studio',state},null,2)],{type:'application/json'});downloadBlob(blob,(state.draftName||'ring-guide-draft')+'.json')};
+$('importDraft').onclick=()=>$('draftFile').click();$('draftFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o.state&&Array.isArray(o.state.slots)){pushHistory();activeDraftId=null;state={...state,...o.state,slots:o.state.slots.slice(0,SLOTS).map(s=>({image:null,name:'',effect:'',hint:'',...s}))};while(state.slots.length<SLOTS)state.slots.push({image:null,name:'',effect:'',hint:''});render();}}catch(error){alert('That draft file could not be opened.')}e.target.value=''};
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function loadImage(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+function wrap(ctx,text,maxWidth,font){ctx.font=font;const words=String(text||'').split(/\s+/);let lines=[],line='';for(const w of words){const test=line?line+' '+w:w;if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines}
+async function exportPNG(){const c=document.createElement('canvas');c.width=1024;c.height=1536;const ctx=c.getContext('2d');const t=BUILTIN[state.template];const bg=await loadImage(t.src||t.data);ctx.drawImage(bg,0,0,1024,1536);
+ // white/transparent input text is rendered directly over the template; labels are already part of the template.
+ for(let i=0;i<SLOTS;i++){const s=state.slots[i];const col=i%2,row=Math.floor(i/2),x=col?526:49,y=252+row*247;
+  if(s.image){const im=await loadImage(s.image);const box={x:x+20,y:y+19,w:150,h:150};const scale=Math.min(box.w/im.naturalWidth,box.h/im.naturalHeight);const w=im.naturalWidth*scale,h=im.naturalHeight*scale;ctx.drawImage(im,box.x+(box.w-w)/2,box.y+(box.h-h)/2,w,h)}
+  ctx.fillStyle='#301b0e';ctx.textBaseline='top';
+  ctx.font='700 22px Georgia';ctx.fillText(s.name||'',x+188,y+22);
+  ctx.font='16px Georgia';wrap(ctx,s.effect,238,'16px Georgia').slice(0,3).forEach((line,j)=>ctx.fillText(line,x+188,y+76+j*19));
+  ctx.font='italic 15px Georgia';wrap(ctx,s.hint,238,'italic 15px Georgia').slice(0,3).forEach((line,j)=>ctx.fillText(line,x+188,y+140+j*18));
+ }
+ if(state.pageNumber){ctx.fillStyle='#301b0e';ctx.font='700 22px Georgia';ctx.textAlign='center';ctx.fillText(state.pageNumber,512,1490);ctx.textAlign='left'}
+ c.toBlob(b=>downloadBlob(b,(state.draftName||'ring-guide-page')+'.png'),'image/png')
+}
+$('downloadPng').onclick=exportPNG;
+function fit(){const stage=$('stage');const maxW=Math.max(300,stage.clientWidth-32);const scale=Math.min(1,maxW/1024);$('canvasWrap').style.transform=`scale(${scale})`;stage.style.height=(1536*scale+32)+'px'}
+$('fitStage').onclick=fit;window.addEventListener('resize',fit);
+render();renderDrafts();setTimeout(fit,50);
+</script>
+</body>
+</html>
