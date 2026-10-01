@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artifact Guide Builder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap');
+:root{--ink:#4a2b17;--paper:#e7c38c;--panel:#3b2417;--panel2:#5a3822;}
+*{box-sizing:border-box} body{margin:0;background:#20130d;color:#f3dfbb;font-family:Georgia,serif}
+header{padding:16px 22px;display:flex;gap:14px;align-items:center;justify-content:space-between;background:linear-gradient(#4b2e1c,#2b190f);border-bottom:1px solid #7d5737;position:sticky;top:0;z-index:20}
+header h1{font-family:'IM Fell English',Georgia,serif;font-size:24px;margin:0;font-weight:normal;letter-spacing:.3px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.btn{border:1px solid #8b6844;background:#6b4729;color:#f9e8c8;padding:9px 13px;border-radius:7px;cursor:pointer;font-family:inherit}.btn:hover{background:#805633}.btn.primary{background:#8a5a2f}.btn input{display:none}
+main{display:grid;grid-template-columns:minmax(360px,430px) minmax(500px,1fr);gap:18px;max-width:1500px;margin:18px auto;padding:0 18px}
+.sidebar{background:#2f1d13;border:1px solid #6d4a2e;border-radius:10px;padding:15px;height:max-content;position:sticky;top:76px}.sidebar h2{font-size:18px;margin:0 0 10px;font-weight:normal}.hint{font-size:12px;line-height:1.5;color:#d8c09b;margin:7px 0 12px}
+label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=text],textarea,select{width:100%;border:1px solid #765333;border-radius:6px;background:transparent;color:#f6e6c8;padding:9px;font-family:Georgia,serif} textarea{resize:vertical;min-height:82px}
+.slots{display:grid;gap:12px}.slot{border:1px solid #65432a;border-radius:8px;padding:10px;background:#24160f}.slot-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#e5cba1}.slot-grid{display:grid;grid-template-columns:110px 1fr;gap:10px}.drop{width:110px;height:110px;border:1px dashed #9b7047;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#160d08;color:#c6a77c;font-size:11px;cursor:pointer}.drop img{width:100%;height:100%;object-fit:cover}.slot small{color:#bda582}.slot-actions{display:flex;gap:6px;margin-top:8px}.mini{font-size:11px;padding:6px 8px}
+.editor-wrap{display:flex;justify-content:center;align-items:flex-start}.page{position:relative;width:min(100%,720px);aspect-ratio:2/3;background:#b9905e center/100% 100% no-repeat;box-shadow:0 15px 35px #0008;overflow:hidden}.field{position:absolute;background:transparent;border:0;outline:0;color:#301b0e;font-family:'IM Fell English',Georgia,serif;font-style:italic}.page .field{border:0;outline:0;color:#301b0e}.title{left:0;top:6.2%;width:100%;height:7%;font-size:25px;font-weight:700;text-align:center}.title::placeholder{color:#301b0eaa}.name{width:34%;height:4%;font-size:18px;font-weight:700;color:#301b0e}.desc{width:40%;height:11%;font-size:15px;line-height:1.22;resize:none;overflow:hidden;color:#301b0e}.name::placeholder,.desc::placeholder{color:transparent}
+/* Coordinates are kept relative to the supplied 1024x1536 template. */
+.s1 .name{left:38%;top:19.3%}.s1 .desc{left:31%;top:27.8%}
+.s2 .name{left:36.25%;top:35.3%}.s2 .desc{left:31%;top:43.0%}
+.s3 .name{left:39%;top:48.8%}.s3 .desc{left:31%;top:56.7%}
+.s4 .name{left:36.25%;top:65.1%}.s4 .desc{left:33.5%;top:71.8%}
+.s5 .name{left:41%;top:78%;}.s5 .desc{left:36%;top:86.6%}
+.s1 .art{left:7.5%;top:21%;width:17%;height:10.2%}.s2 .art{left:69.8%;top:35%;width:17%;height:10.2%}.s3 .art{left:8%;top:49.8%;width:17%;height:10.2%}.s4 .art{left:69.2%;top:65%;width:17%;height:10.2%}.s5 .art{left:11.3%;top:79.1%;width:17%;height:10.2%}
+.art{position:absolute;object-fit:contain;display:none;border-radius:5px;cursor:grab}.slotPreview{display:none}
+.status{font-size:12px;color:#cfb78e;margin-top:10px;min-height:18px}.footer-note{font-size:11px;color:#a98b67;margin-top:12px;line-height:1.45}
+@media(max-width:950px){main{grid-template-columns:1fr}.sidebar{position:static}.editor-wrap{order:-1}.page{width:min(100%,620px)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Artifact Guide Builder</h1>
+  <div class="toolbar">
+    <a class="btn" href="ring-guide-studio/ring-guide-site/index.html">Open Ring Guide</a>
+    <button class="btn" id="addImages" type="button">Add Artifact Images</button>
+    <input id="imageFiles" type="file" accept="image/*" multiple hidden>
+    <button class="btn" id="saveDraft">Save Draft</button>
+    <button class="btn" id="loadDraft">Load Draft</button>
+    <button class="btn" id="exportDraft">Download Draft</button>
+    <label class="btn">Import Draft <input id="draftFile" type="file" accept="application/json" hidden></label>
+    <button class="btn primary" id="exportPng">Export PNG</button>
+  </div>
+</header>
+<main>
+  <aside class="sidebar">
+    <h2>Page Information</h2>
+    <label>Page / Region Title</label>
+    <input id="titleInput" type="text" placeholder="Type the region or page title…">
+    <div class="hint">The title sits in the ornamental space at the top. It is intentionally blank in the template.</div>
+    <h2>Artifacts</h2>
+    <div class="hint">Drop an artifact image onto a slot, or use “Add Artifact Images.” If its filename contains an artifact name from the supplied list, the name and description are filled automatically.</div>
+    <div class="slots" id="slots"></div>
+    <div id="status" class="status"></div>
+    <div class="footer-note">Matching ignores capitalization, punctuation, and common filename separators. You can always edit the populated name or description afterward.</div>
+  </aside>
+  <section class="editor-wrap">
+    <div class="page" id="page">
+      <input id="titleField" class="field title" type="text" placeholder="">
+      <div class="s1"><img class="art" data-slot="1"><input class="field name" data-slot="1" type="text"><textarea class="field desc" data-slot="1"></textarea></div>
+      <div class="s2"><img class="art" data-slot="2"><input class="field name" data-slot="2" type="text"><textarea class="field desc" data-slot="2"></textarea></div>
+      <div class="s3"><img class="art" data-slot="3"><input class="field name" data-slot="3" type="text"><textarea class="field desc" data-slot="3"></textarea></div>
+      <div class="s4"><img class="art" data-slot="4"><input class="field name" data-slot="4" type="text"><textarea class="field desc" data-slot="4"></textarea></div>
+      <div class="s5"><img class="art" data-slot="5"><input class="field name" data-slot="5" type="text"><textarea class="field desc" data-slot="5"></textarea></div>
+    </div>
+  </section>
+</main>
+<script>
+const state={items:[],slots:Array.from({length:5},()=>({name:'',description:'',image:null,imageName:''})),title:''};
+const page=document.getElementById('page'), statusEl=document.getElementById('status');
+let artifactListReady=Promise.resolve();
+let templateUrl='artifact template.png';
+page.style.backgroundImage=`url('${templateUrl}')`;
+
+function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim();}
+function itemMatch(filename){
+  const base=filename.replace(/\.[^.]+$/,'');
+  const n=norm(base);
+  let best=null, bestScore=0;
+  for(const it of state.items){
+    const k=norm(it.name);
+    if(!k) continue;
+    const exact=n===k, contains=n.includes(k), rev=k.includes(n)&&n.length>5;
+    if(exact) return it;
+    if(contains || rev){ const score=k.length/(n.length+1); if(score>bestScore){best=it;bestScore=score;} }
+  }
+  return best;
+}
+function parseArtifactList(text,filename=''){
+  if(filename.toLowerCase().endsWith('.json')){
+    const data=JSON.parse(text);
+    if(!Array.isArray(data))throw Error('Artifact JSON must be an array.');
+    return data.filter(it=>it&&it.name).map(it=>({name:String(it.name),description:String(it.description||'')}));
+  }
+  const lines=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean), items=[];
+  for(let i=0;i<lines.length;i+=2){
+    if(lines[i])items.push({name:lines[i],description:lines[i+1]||''});
+  }
+  if(!items.length)throw Error('No artifact entries found.');
+  return items;
+}
+function setStatus(t){statusEl.textContent=t;}
+function render(){
+  document.getElementById('titleField').value=state.title||'';
+  state.slots.forEach((s,i)=>{
+    const n=document.querySelector(`.name[data-slot="${i+1}"]`), d=document.querySelector(`.desc[data-slot="${i+1}"]`), im=document.querySelector(`.art[data-slot="${i+1}"]`);
+    n.value=s.name||''; d.value=s.description||'';
+    if(s.image){im.src=s.image;im.style.display='block';}else{im.removeAttribute('src');im.style.display='none';}
+  });
+  renderSlotControls(); bindPageReordering();
+}
+function bindPageReordering(){
+  document.querySelectorAll('#page > div[class^="s"]').forEach((slotEl,i)=>{
+    const art=slotEl.querySelector('.art');
+    art.draggable=Boolean(state.slots[i].image);
+    art.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain','slot:'+i);slotEl.style.opacity='.55';});
+    art.addEventListener('dragend',()=>{slotEl.style.opacity='';});
+    slotEl.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('text/plain')){e.preventDefault();slotEl.style.outline='2px dashed #6b3d20';}});
+    slotEl.addEventListener('dragleave',()=>{slotEl.style.outline='';});
+    slotEl.addEventListener('drop',e=>{
+      e.preventDefault();slotEl.style.outline='';
+      const data=e.dataTransfer.getData('text/plain');
+      if(!data.startsWith('slot:'))return;
+      const from=Number(data.slice(5));
+      if(!Number.isInteger(from)||from===i||!state.slots[from])return;
+      swapSlots(from,i);
+    });
+  });
+}
+function swapSlots(from,to){
+  [state.slots[from],state.slots[to]]=[state.slots[to],state.slots[from]];
+  render();setStatus(`Swapped artifact slots ${from+1} and ${to+1}.`);
+}
+function renderSlotControls(){
+  const wrap=document.getElementById('slots'); wrap.innerHTML='';
+  state.slots.forEach((s,i)=>{
+    const el=document.createElement('div'); el.className='slot'; el.draggable=Boolean(s.image);
+    el.innerHTML=`<div class="slot-head"><span>Artifact ${i+1} · ${i%2===0?'LEFT':'RIGHT'}</span><small>${s.imageName||''}</small></div>
+      <div class="slot-grid"><div class="drop" data-drop="${i}">${s.image?'<img src="'+s.image+'">':'Drop image here'}</div><div><label>Name</label><input type="text" data-name="${i}" value="${esc(s.name)}"><label>Description</label><textarea data-desc="${i}" placeholder="Description is filled from the matching artifact image.">${esc(s.description)}</textarea></div></div>
+      <div class="slot-actions"><button class="btn mini" data-clear="${i}">Clear</button></div>`;
+    wrap.appendChild(el);
+    el.addEventListener('dragstart',e=>{if(!state.slots[i].image){e.preventDefault();return;}e.dataTransfer.setData('text/plain','slot:'+i);el.style.opacity='.55';});
+    el.addEventListener('dragend',()=>{el.style.opacity='';});
+    el.addEventListener('dragover',e=>{if(e.dataTransfer.types.includes('text/plain')){e.preventDefault();el.style.outline='2px dashed #6b3d20';}});
+    el.addEventListener('dragleave',()=>{el.style.outline='';});
+    el.addEventListener('drop',e=>{const data=e.dataTransfer.getData('text/plain');if(!data.startsWith('slot:'))return;e.preventDefault();el.style.outline='';const from=Number(data.slice(5));if(Number.isInteger(from)&&from!==i&&state.slots[from])swapSlots(from,i);});
+  });
+  wrap.querySelectorAll('[data-name]').forEach(x=>x.addEventListener('input',e=>{state.slots[+e.target.dataset.name].name=e.target.value;syncCanvasFields();}));
+  wrap.querySelectorAll('[data-desc]').forEach(x=>x.addEventListener('input',e=>{state.slots[+e.target.dataset.desc].description=e.target.value;syncCanvasFields();}));
+  wrap.querySelectorAll('[data-clear]').forEach(x=>x.onclick=()=>{const i=+x.dataset.clear;state.slots[i]={name:'',description:'',image:null,imageName:''};render();});
+  wrap.querySelectorAll('.drop').forEach(drop=>{
+    const i=+drop.dataset.drop; drop.addEventListener('dragover',e=>{e.preventDefault()}); drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadImageIntoSlot(f,i);}); drop.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>inp.files[0]&&loadImageIntoSlot(inp.files[0],i);inp.click();};
+  });
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+async function loadImageIntoSlot(file,i){
+ await artifactListReady;
+ const url=await fileToData(file); const match=itemMatch(file.name);
+ state.slots[i].image=url;state.slots[i].imageName=file.name;
+ if(match){state.slots[i].name=match.name;state.slots[i].description=match.description;setStatus(`Matched “${match.name}” from ${file.name}`);}else{setStatus(`Image added: ${file.name}. No artifact-list match was found.`);}
+ render();
+}
+function fileToData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+document.getElementById('imageFiles').addEventListener('change',async e=>{const files=Array.from(e.target.files).filter(f=>f.type.startsWith('image/'));let start=state.slots.findIndex(s=>!s.image);if(start<0)start=0;await artifactListReady;for(const f of files){await loadImageIntoSlot(f,start%5);start++;}e.target.value='';if(files.length)setStatus(`Added ${files.length} artifact image${files.length===1?'':'s'} with automatic matching.`);});
+document.getElementById('addImages').onclick=()=>document.getElementById('imageFiles').click();
+document.getElementById('titleInput').addEventListener('input',e=>{state.title=e.target.value;document.getElementById('titleField').value=state.title;});
+document.getElementById('titleField').addEventListener('input',e=>{state.title=e.target.value;document.getElementById('titleInput').value=state.title;});
+function syncCanvasFields(){state.slots.forEach((s,i)=>{document.querySelector(`.name[data-slot="${i+1}"]`).value=s.name;document.querySelector(`.desc[data-slot="${i+1}"]`).value=s.description;});}
+
+document.getElementById('saveDraft').onclick=()=>{localStorage.setItem('artifactGuideDraft',JSON.stringify(state));setStatus('Draft saved in this browser.');};
+document.getElementById('loadDraft').onclick=()=>{const x=localStorage.getItem('artifactGuideDraft');if(!x){setStatus('No saved draft found.');return;}try{Object.assign(state,JSON.parse(x));render();setStatus('Draft loaded.');}catch{setStatus('Saved draft could not be read.');}};
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+document.getElementById('exportDraft').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,app:'Artifact Guide Builder',state},null,2)],{type:'application/json'});downloadBlob(blob,(state.title||'artifact-guide-draft').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')+'.json');setStatus('Draft downloaded.');};
+document.getElementById('draftFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!imported.state||!Array.isArray(imported.state.slots))throw Error();const slots=imported.state.slots.slice(0,5).map(s=>({name:'',description:'',image:null,imageName:'',...s}));while(slots.length<5)slots.push({name:'',description:'',image:null,imageName:''});Object.assign(state,imported.state,{slots});render();setStatus('Draft imported.');}catch{setStatus('That draft file could not be opened.');}e.target.value='';};
+
+// PNG export: draw the supplied template plus the five user images and text onto a 1024x1536 canvas.
+function fitText(ctx,text,maxWidth,font){ctx.font=font; if(ctx.measureText(text).width<=maxWidth)return text; let s=text;while(s.length>1&&ctx.measureText(s+'…').width>maxWidth)s=s.slice(0,-1);return s+'…';}
+function wrapText(ctx,text,maxWidth,font,lineHeight,maxLines){ctx.font=font;const words=(text||'').split(/\s+/);const lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(ctx.measureText(test).width<=maxWidth){line=test;}else{if(line)lines.push(line);line=w;if(lines.length===maxLines-1)break;}}if(line&&lines.length<maxLines)lines.push(line);return lines;}
+async function exportPNG(){
+ setStatus('Preparing PNG…');
+ const c=document.createElement('canvas');c.width=1024;c.height=1536;const ctx=c.getContext('2d');
+ const bg=await loadImg(templateUrl);ctx.drawImage(bg,0,0,1024,1536);
+ // Title
+ ctx.fillStyle='#301b0e';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 italic 25px "Times New Roman", Georgia, serif';ctx.fillText(state.title||'',512,149,470);
+ const pos=[
+  {ix:76.8,iy:322.6,iw:174.1,ih:156.7,nx:389,ny:296,dx:317,dy:426,dw:440},
+  {ix:714.8,iy:537.6,iw:174.1,ih:156.7,nx:371,ny:543,dx:317,dy:660,dw:440},
+  {ix:81.9,iy:765,iw:174.1,ih:156.7,nx:400,ny:749,dx:317,dy:865,dw:440},
+  {ix:708.6,iy:998.4,iw:174.1,ih:156.7,nx:371,ny:998,dx:343,dy:1102,dw:440},
+  {ix:115.7,iy:1215,iw:174.1,ih:156.7,nx:420,ny:1198,dx:368,dy:1330,dw:440}
+ ];
+ for(let i=0;i<5;i++){
+  const s=state.slots[i],p=pos[i];
+  if(s.image){const im=await loadImg(s.image);const scale=Math.min(p.iw/im.naturalWidth,p.ih/im.naturalHeight);const w=im.naturalWidth*scale,h=im.naturalHeight*scale;ctx.drawImage(im,p.ix+(p.iw-w)/2,p.iy+(p.ih-h)/2,w,h);}
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillStyle='#301b0e';ctx.font='700 italic 20px "Times New Roman", Georgia, serif';ctx.fillText(fitText(ctx,s.name,p.dw,ctx.font),p.nx,p.ny);
+  ctx.font='italic 17px "Times New Roman", Georgia, serif';const lines=wrapText(ctx,s.description,p.dw,ctx.font,22,5);lines.forEach((line,j)=>ctx.fillText(line,p.dx,p.dy+j*22));
+ }
+ const a=document.createElement('a');a.download=(state.title||'artifact-guide').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')+'.png';a.href=c.toDataURL('image/png');a.click();setStatus('PNG exported.');
+}
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});}
+document.getElementById('exportPng').onclick=exportPNG;
+
+// Drag images directly from the file manager onto the page; fill the next open slot.
+page.addEventListener('dragover',e=>e.preventDefault());page.addEventListener('drop',async e=>{e.preventDefault();const fs=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));let i=state.slots.findIndex(s=>!s.image);if(i<0)i=0;for(const f of fs){await loadImageIntoSlot(f,i%5);i++;}});
+
+// Load the bundled text list so filename matching stays automatic without exposing the list UI.
+artifactListReady=fetch('all_items_names_and_descriptions.txt').then(r=>{if(!r.ok)throw Error();return r.text();}).then(text=>{state.items=parseArtifactList(text,'all_items_names_and_descriptions.txt');render();setStatus(`Ready — automatic matching is active for ${state.items.length} artifacts.`);}).catch(()=>fetch('artifacts.json').then(r=>r.json()).then(data=>{state.items=data;render();setStatus(`Ready — automatic matching is active for ${data.length} artifacts.`);}).catch(()=>{render();setStatus('Ready. Add an image with a matching artifact filename.');}));
+</script>
+</body></html>

@@ -1,5 +1,5 @@
 [build]
-  publish = "ring-guide-studio/ring-guide-site"
+  publish = "."
 
 [[headers]]
   for = "/*"
