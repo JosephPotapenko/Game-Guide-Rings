@@ -17,12 +17,12 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
 .slots{display:grid;gap:12px}.slot{border:1px solid #65432a;border-radius:8px;padding:10px;background:#24160f}.slot-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#e5cba1}.slot-grid{display:grid;grid-template-columns:110px 1fr;gap:10px}.drop{width:110px;height:110px;border:1px dashed #9b7047;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#160d08;color:#c6a77c;font-size:11px;cursor:pointer}.drop img{width:100%;height:100%;object-fit:contain;padding:8px}.slot small{color:#bda582}.slot-actions{display:flex;gap:6px;margin-top:8px}.mini{font-size:11px;padding:6px 8px}
 .editor-wrap{display:flex;justify-content:center;align-items:flex-start}.page{position:relative;width:min(100%,720px);aspect-ratio:2/3;background:#b9905e center/100% 100% no-repeat;box-shadow:0 15px 35px #0008;overflow:hidden}.field{position:absolute;background:transparent;border:0;outline:0;color:#301b0e;font-family:'IM Fell English',Georgia,serif;font-style:italic}.page .field{border:0;outline:0;color:#301b0e}.title{left:0;top:5.54%;width:100%;height:7%;font-size:25px;font-weight:700;text-align:center}.title::placeholder{color:#301b0eaa}.page-desc{left:10%;top:10.20%;width:80%;height:3%;font-size:15px;line-height:1.15;text-align:center;font-style:normal;resize:none;overflow:hidden}.name{width:34%;height:4%;font-size:18px;font-weight:700;color:#301b0e}.desc{width:40%;height:11%;font-size:15px;line-height:1.22;resize:none;overflow:hidden;color:#301b0e}.name::placeholder,.desc::placeholder{color:transparent}
 /* Coordinates are kept relative to the supplied 1024x1536 template. */
-.s1 .name{left:38%;top:20.02%}.s1 .desc{left:31%;top:24.22%}
-.s2 .name{left:37.43%;top:36.02%}.s2 .desc{left:31%;top:39.94%}
-.s3 .name{left:39%;top:49.52%}.s3 .desc{left:31%;top:53.64%}
-.s4 .name{left:37.92%;top:65.82%}.s4 .desc{left:32.42%;top:69.07%}
-.s5 .name{left:41.49%;top:79.70%;}.s5 .desc{left:35.51%;top:83.54%}
-.desc{font-size:17px;font-style:normal}.s1 .desc,.s3 .desc,.s5 .desc{width:43.9%}.s2 .desc,.s4 .desc{width:36.59%}
+.s1 .name{left:38%;top:20.02%}.s1 .desc{left:31%;top:23.22%}
+.s2 .name{left:37.43%;top:36.02%}.s2 .desc{left:31%;top:39.5%}
+.s3 .name{left:39%;top:49.52%}.s3 .desc{left:31%;top:52.64%}
+.s4 .name{left:37.92%;top:65.82%}.s4 .desc{left:32.42%;top:68.7%}
+.s5 .name{left:41.49%;top:79.70%;}.s5 .desc{left:35.51%;top:82.54%}
+.desc{font-size:13px;font-style:normal}.s1 .desc,.s3 .desc,.s5 .desc{width:43.9%}.s2 .desc,.s4 .desc{width:36.59%}
 .s1 .art{left:9.3%;top:22.45%;width:16%;height:9.2%}.s2 .art{left:72.2%;top:36.6%;width:16%;height:9.2%}.s3 .art{left:9.4%;top:51.1%;width:16%;height:9.2%}.s4 .art{left:71.9%;top:66%;width:16%;height:9.2%}.s5 .art{left:13.0%;top:81.1%;width:16%;height:9.2%}
 .art{position:absolute;object-fit:contain;display:none;border-radius:5px;cursor:grab}.slotPreview{display:none}
 .status{font-size:12px;color:#cfb78e;margin-top:10px;min-height:18px}.footer-note{font-size:11px;color:#a98b67;margin-top:12px;line-height:1.45}
@@ -201,7 +201,7 @@ async function exportPNG(){
   const s=state.slots[i],p=pos[i];
   if(s.image){const im=await loadImg(s.image);const scale=Math.min(p.iw/im.naturalWidth,p.ih/im.naturalHeight);const w=im.naturalWidth*scale,h=im.naturalHeight*scale;ctx.drawImage(im,p.ix+(p.iw-w)/2,p.iy+(p.ih-h)/2,w,h);}
   ctx.textAlign='left';ctx.textBaseline='top';ctx.fillStyle='#301b0e';ctx.font='700 italic 20px "Times New Roman", Georgia, serif';ctx.fillText(fitText(ctx,s.name,p.dw,ctx.font),p.nx,p.ny);
-  ctx.font='17px "Times New Roman", Georgia, serif';const lines=wrapText(ctx,s.description,p.dw,ctx.font,22,5);lines.forEach((line,j)=>ctx.fillText(line,p.dx,p.dy+j*22));
+  ctx.font='16px "Times New Roman", Georgia, serif';const lines=wrapText(ctx,s.description,p.dw,ctx.font,18,5);lines.forEach((line,j)=>ctx.fillText(line,p.dx,p.dy+j*18));
  }
  const a=document.createElement('a');a.download=(state.title||'artifact-guide').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')+'.png';a.href=c.toDataURL('image/png');a.click();setStatus('PNG exported.');
 }
