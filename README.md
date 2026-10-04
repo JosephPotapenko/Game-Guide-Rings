@@ -20,7 +20,7 @@ Open `http://localhost:8000` in a modern browser.
 
 ## Static-site behavior
 
-The editor supports artifact image upload and drag-and-drop placement, direct editing of artifact names and descriptions, automatic filename matching against `all_items_names_and_descriptions.txt` or `artifacts.json`, draft save/load, and PNG export at exactly 1024 x 1536 pixels.
+The editor supports artifact image upload and drag-and-drop placement, direct editing of artifact names and descriptions, automatic filename matching against `all_items_names_and_descriptions.txt` or `artifacts.json`, draft save/load, and PNG export at exactly 1024 x 1536 pixels. Text-list entries use four-line groups: the source item name, proposed display name, description, and a blank separator. Filenames match the source item name, while the proposed display name is filled into the page.
 
 Saved drafts use IndexedDB in the current browser and device. They are not shared between visitors or browsers. JSON export/import is the supported way to move drafts between devices; shared drafts would require a backend such as Supabase or Firebase.
 # Game-Guide-Rings

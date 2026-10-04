@@ -15,14 +15,14 @@ main{display:grid;grid-template-columns:minmax(360px,430px) minmax(500px,1fr);ga
 .sidebar{background:#2f1d13;border:1px solid #6d4a2e;border-radius:10px;padding:15px;height:max-content;position:sticky;top:76px}.sidebar h2{font-size:18px;margin:0 0 10px;font-weight:normal}.hint{font-size:12px;line-height:1.5;color:#d8c09b;margin:7px 0 12px}
 label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=text],textarea,select{width:100%;border:1px solid #765333;border-radius:6px;background:transparent;color:#f6e6c8;padding:9px;font-family:Georgia,serif} textarea{resize:vertical;min-height:82px}
 .slots{display:grid;gap:12px}.slot{border:1px solid #65432a;border-radius:8px;padding:10px;background:#24160f}.slot-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#e5cba1}.slot-grid{display:grid;grid-template-columns:110px 1fr;gap:10px}.drop{width:110px;height:110px;border:1px dashed #9b7047;border-radius:5px;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#160d08;color:#c6a77c;font-size:11px;cursor:pointer}.drop img{width:100%;height:100%;object-fit:contain;padding:8px}.slot small{color:#bda582}.slot-actions{display:flex;gap:6px;margin-top:8px}.mini{font-size:11px;padding:6px 8px}
-.editor-wrap{display:flex;justify-content:center;align-items:flex-start}.page{position:relative;width:min(100%,720px);aspect-ratio:2/3;background:#b9905e center/100% 100% no-repeat;box-shadow:0 15px 35px #0008;overflow:hidden}.field{position:absolute;background:transparent;border:0;outline:0;color:#301b0e;font-family:'IM Fell English',Georgia,serif;font-style:italic}.page .field{border:0;outline:0;color:#301b0e}.title{left:0;top:5.54%;width:100%;height:7%;font-size:25px;font-weight:700;text-align:center}.title::placeholder{color:#301b0eaa}.page-desc{left:10%;top:10.20%;width:80%;height:3%;font-size:15px;line-height:1.15;text-align:center;font-style:normal;resize:none;overflow:hidden}.name{width:34%;height:4%;font-size:18px;font-weight:700;color:#301b0e}.desc{width:40%;height:11%;font-size:15px;line-height:1.22;resize:none;overflow:hidden;color:#301b0e}.name::placeholder,.desc::placeholder{color:transparent}
+.editor-wrap{display:flex;justify-content:center;align-items:flex-start}.page{position:relative;width:min(100%,720px);aspect-ratio:2/3;background:#b9905e center/100% 100% no-repeat;box-shadow:0 15px 35px #0008;overflow:hidden}.field{position:absolute;background:transparent;border:0;outline:0;color:#301b0e;font-family:'IM Fell English',Georgia,serif;font-style:italic}.page .field{border:0;outline:0;color:#301b0e}.title{left:0;top:5.44%;width:100%;height:7%;font-size:22px;font-weight:700;text-align:center}.title::placeholder{color:#301b0eaa}.page-desc{left:10%;top:10.10%;width:80%;height:3%;font-size:13px;line-height:1.10;text-align:center;font-style:normal;resize:none;overflow:hidden}.name{width:34%;height:4%;font-size:18px;font-weight:700;color:#301b0e}.desc{width:40%;height:11%;font-size:15.5px;line-height:1.22;resize:none;overflow:hidden;color:#301b0e}.name::placeholder,.desc::placeholder{color:transparent}
 /* Coordinates are kept relative to the supplied 1024x1536 template. */
 .s1 .name{left:38%;top:20.02%}.s1 .desc{left:31%;top:23.22%}
 .s2 .name{left:37.43%;top:36.02%}.s2 .desc{left:31%;top:39.5%}
 .s3 .name{left:39%;top:49.52%}.s3 .desc{left:31%;top:52.64%}
 .s4 .name{left:37.92%;top:65.82%}.s4 .desc{left:32.42%;top:68.7%}
 .s5 .name{left:41.49%;top:79.70%;}.s5 .desc{left:35.51%;top:82.54%}
-.desc{font-size:13px;font-style:normal}.s1 .desc,.s3 .desc,.s5 .desc{width:43.9%}.s2 .desc,.s4 .desc{width:36.59%}
+.desc{font-size:15px;font-style:normal}.s1 .desc,.s3 .desc,.s5 .desc{width:60%}.s2 .desc{left:16%;width:52.59%}.s4 .desc{left:17.42%;top:69%;width:52.59%}
 .s1 .art{left:9.3%;top:22.45%;width:16%;height:9.2%}.s2 .art{left:72.2%;top:36.6%;width:16%;height:9.2%}.s3 .art{left:9.4%;top:51.1%;width:16%;height:9.2%}.s4 .art{left:71.9%;top:66%;width:16%;height:9.2%}.s5 .art{left:13.0%;top:81.1%;width:16%;height:9.2%}
 .art{position:absolute;object-fit:contain;display:none;border-radius:5px;cursor:grab}.slotPreview{display:none}
 .status{font-size:12px;color:#cfb78e;margin-top:10px;min-height:18px}.footer-note{font-size:11px;color:#a98b67;margin-top:12px;line-height:1.45}
@@ -94,11 +94,17 @@ function parseArtifactList(text,filename=''){
   if(filename.toLowerCase().endsWith('.json')){
     const data=JSON.parse(text);
     if(!Array.isArray(data))throw Error('Artifact JSON must be an array.');
-    return data.filter(it=>it&&it.name).map(it=>({name:String(it.name),description:String(it.description||'')}));
+    return data.filter(it=>it&&it.name).map(it=>({
+      name:String(it.name),
+      proposedName:String(it.proposedName||it.displayName||it.name),
+      description:String(it.description||'')
+    }));
   }
-  const lines=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean), items=[];
-  for(let i=0;i<lines.length;i+=2){
-    if(lines[i])items.push({name:lines[i],description:lines[i+1]||''});
+  const entries=text.split(/\r?\n\s*\r?\n/).map(entry=>entry.split(/\r?\n/).map(line=>line.trim()).filter(Boolean)).filter(entry=>entry.length);
+  const items=[];
+  for(const entry of entries){
+    if(entry.length<3)throw Error('Each artifact entry must include an item name, proposed name, and description.');
+    items.push({name:entry[0],proposedName:entry[1],description:entry.slice(2).join(' ')});
   }
   if(!items.length)throw Error('No artifact entries found.');
   return items;
@@ -162,7 +168,7 @@ async function loadImageIntoSlot(file,i){
  await artifactListReady;
  const url=await fileToData(file); const match=itemMatch(file.name);
  state.slots[i].image=url;state.slots[i].imageName=file.name;
- if(match){state.slots[i].name=match.name;state.slots[i].description=match.description;setStatus(`Matched “${match.name}” from ${file.name}`);}else{setStatus(`Image added: ${file.name}. No artifact-list match was found.`);}
+ if(match){state.slots[i].name=match.proposedName||match.name;state.slots[i].description=match.description;setStatus(`Matched “${state.slots[i].name}” from ${file.name}`);}else{setStatus(`Image added: ${file.name}. No artifact-list match was found.`);}
  render();
 }
 function fileToData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
