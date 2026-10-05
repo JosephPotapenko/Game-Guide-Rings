@@ -26,6 +26,7 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
 .s1 .art{left:9.3%;top:22.45%;width:16%;height:9.2%}.s2 .art{left:72.2%;top:36.6%;width:16%;height:9.2%}.s3 .art{left:9.4%;top:51.1%;width:16%;height:9.2%}.s4 .art{left:71.9%;top:66%;width:16%;height:9.2%}.s5 .art{left:13.0%;top:81.1%;width:16%;height:9.2%}
 .art{position:absolute;object-fit:contain;display:none;border-radius:5px;cursor:grab}.slotPreview{display:none}
 .status{font-size:12px;color:#cfb78e;margin-top:10px;min-height:18px}.footer-note{font-size:11px;color:#a98b67;margin-top:12px;line-height:1.45}
+.draft-list{display:flex;flex-direction:column;gap:7px;margin-top:9px}.draft{border:1px solid #65432a;border-radius:7px;padding:8px;background:#24160f;display:flex;justify-content:space-between;gap:8px;align-items:center}.draft b{font-size:12px;color:#ead7ba}.draft small{display:block;color:#bda582;margin-top:2px}.draft button{background:none;border:0;color:#d9b36b;cursor:pointer;padding:2px 4px}
 @media(max-width:950px){main{grid-template-columns:1fr}.sidebar{position:static}.editor-wrap{order:-1}.page{width:min(100%,620px)}}
 </style>
 </head>
@@ -36,7 +37,7 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
     <a class="btn" href="ring-guide-studio/ring-guide-site/index.html">Open Ring Guide</a>
     <button class="btn" id="addImages" type="button">Add Artifact Images</button>
     <input id="imageFiles" type="file" accept="image/*" multiple hidden>
-    <button class="btn" id="saveDraft">Save Draft</button>
+    <button class="btn" id="saveDraftToolbar">Save Draft</button>
     <button class="btn" id="loadDraft">Load Draft</button>
     <button class="btn" id="exportDraft">Download Draft</button>
     <label class="btn">Import Draft <input id="draftFile" type="file" accept="application/json" hidden></label>
@@ -51,6 +52,11 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
       <label>Page Description</label>
       <textarea id="pageDescriptionInput" placeholder="Optional description under the title."></textarea>
     <div class="hint">The title sits in the ornamental space at the top. It is intentionally blank in the template.</div>
+    <h2>Drafts</h2>
+    <label>Draft Name</label>
+    <input id="draftName" type="text" placeholder="Egypt — Artifacts">
+    <div class="slot-actions"><button class="btn mini primary" id="saveDraft" type="button">Save Draft</button><button class="btn mini" id="newDraft" type="button">New</button></div>
+    <div id="draftList" class="draft-list"></div>
     <h2>Artifacts</h2>
     <div class="hint">Drop an artifact image onto a slot, or use “Add Artifact Images.” If its filename contains an artifact name from the supplied list, the name and description are filled automatically.</div>
     <div class="slots" id="slots"></div>
@@ -70,10 +76,12 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
   </section>
 </main>
 <script>
-const state={items:[],slots:Array.from({length:5},()=>({name:'',description:'',image:null,imageName:''})),title:'',pageDescription:''};
+const blankSlot=()=>({name:'',description:'',image:null,imageName:''});
+const state={items:[],slots:Array.from({length:5},blankSlot),title:'',pageDescription:'',draftName:''};
 const page=document.getElementById('page'), statusEl=document.getElementById('status');
 let artifactListReady=Promise.resolve();
 let templateUrl='artifact template.png';
+let activeDraftId=null;
 page.style.backgroundImage=`url('${templateUrl}')`;
 
 function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ').replace(/[^a-z0-9]+/g,' ').trim();}
@@ -110,9 +118,17 @@ function parseArtifactList(text,filename=''){
   return items;
 }
 function setStatus(t){statusEl.textContent=t;}
+function normalizeDraftState(saved){
+  const slots=Array.isArray(saved.slots)?saved.slots.slice(0,5).map(s=>({...blankSlot(),...s})):Array.from({length:5},blankSlot);
+  while(slots.length<5)slots.push(blankSlot());
+  return {items:state.items,slots,title:String(saved.title||''),pageDescription:String(saved.pageDescription||''),draftName:String(saved.draftName||'')};
+}
 function render(){
   document.getElementById('titleField').value=state.title||'';
   document.getElementById('pageDescriptionField').value=state.pageDescription||'';
+  document.getElementById('titleInput').value=state.title||'';
+  document.getElementById('pageDescriptionInput').value=state.pageDescription||'';
+  document.getElementById('draftName').value=state.draftName||'';
   state.slots.forEach((s,i)=>{
     const n=document.querySelector(`.name[data-slot="${i+1}"]`), d=document.querySelector(`.desc[data-slot="${i+1}"]`), im=document.querySelector(`.art[data-slot="${i+1}"]`);
     n.value=s.name||''; d.value=s.description||'';
@@ -178,13 +194,62 @@ document.getElementById('titleInput').addEventListener('input',e=>{state.title=e
 document.getElementById('titleField').addEventListener('input',e=>{state.title=e.target.value;document.getElementById('titleInput').value=state.title;});
 document.getElementById('pageDescriptionInput').addEventListener('input',e=>{state.pageDescription=e.target.value;document.getElementById('pageDescriptionField').value=state.pageDescription;});
 document.getElementById('pageDescriptionField').addEventListener('input',e=>{state.pageDescription=e.target.value;document.getElementById('pageDescriptionInput').value=state.pageDescription;});
+document.getElementById('draftName').addEventListener('input',e=>{state.draftName=e.target.value;});
 function syncCanvasFields(){state.slots.forEach((s,i)=>{document.querySelector(`.name[data-slot="${i+1}"]`).value=s.name;document.querySelector(`.desc[data-slot="${i+1}"]`).value=s.description;});}
+document.querySelectorAll('.name[data-slot],.desc[data-slot]').forEach(field=>field.addEventListener('input',e=>{
+  const i=Number(e.target.dataset.slot)-1;
+  if(e.target.classList.contains('name'))state.slots[i].name=e.target.value;
+  else state.slots[i].description=e.target.value;
+  const control=document.querySelector(`[data-${e.target.classList.contains('name')?'name':'desc'}="${i}"]`);
+  if(control)control.value=e.target.value;
+}));
 
-document.getElementById('saveDraft').onclick=()=>{localStorage.setItem('artifactGuideDraft',JSON.stringify(state));setStatus('Draft saved in this browser.');};
-document.getElementById('loadDraft').onclick=()=>{const x=localStorage.getItem('artifactGuideDraft');if(!x){setStatus('No saved draft found.');return;}try{Object.assign(state,JSON.parse(x));render();setStatus('Draft loaded.');}catch{setStatus('Saved draft could not be read.');}};
+const DB='artifact-guide-drafts-v1';
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function migrateLegacyDraft(){
+  const legacy=localStorage.getItem('artifactGuideDraft');
+  if(!legacy||localStorage.getItem('artifactGuideDraftMigrated'))return;
+  try{
+    const saved=JSON.parse(legacy), db=await openDB(), id=crypto.randomUUID();
+    const migrated=normalizeDraftState(saved);
+    const tx=db.transaction('drafts','readwrite');
+    tx.objectStore('drafts').put({id,name:migrated.draftName||migrated.title||'Untitled draft',saved:new Date().toISOString(),state:migrated});
+    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    localStorage.setItem('artifactGuideDraftMigrated','1');
+  }catch(error){setStatus('The older artifact draft could not be migrated.');}
+}
+async function renderDrafts(){
+  try{
+    await migrateLegacyDraft();
+    const db=await openDB(),tx=db.transaction('drafts','readonly'),req=tx.objectStore('drafts').getAll();
+    req.onsuccess=()=>{const list=document.getElementById('draftList');list.innerHTML='';
+      req.result.sort((a,b)=>b.saved.localeCompare(a.saved)).forEach(d=>{
+        const el=document.createElement('div');el.className='draft';
+        el.innerHTML=`<div><b>${esc(d.name)}</b><small>${new Date(d.saved).toLocaleString()}</small></div><div><button type="button" title="Open">Open</button><button type="button" title="Delete">×</button></div>`;
+        el.querySelector('button').onclick=()=>{Object.assign(state,normalizeDraftState(d.state));activeDraftId=d.id;render();setStatus(`Loaded “${d.name}”.`);};
+        el.querySelectorAll('button')[1].onclick=async()=>{if(!confirm('Delete this draft?'))return;const del=db.transaction('drafts','readwrite');del.objectStore('drafts').delete(d.id);del.oncomplete=()=>{if(activeDraftId===d.id)activeDraftId=null;renderDrafts();};};
+        list.appendChild(el);
+      });
+    };
+    req.onerror=()=>setStatus('Saved artifact drafts could not be read.');
+  }catch(error){setStatus('Artifact draft storage is unavailable in this browser.');}
+}
+async function saveDraft(){
+  try{
+    const db=await openDB(),id=activeDraftId||crypto.randomUUID(),name=state.draftName.trim()||state.title.trim()||'Untitled draft';
+    const tx=db.transaction('drafts','readwrite');
+    tx.objectStore('drafts').put({id,name,saved:new Date().toISOString(),state:normalizeDraftState(state)});
+    tx.oncomplete=()=>{activeDraftId=id;renderDrafts();setStatus(`Draft saved as “${name}”.`);};
+    tx.onerror=()=>setStatus('Draft could not be saved.');
+  }catch(error){setStatus('Artifact draft storage is unavailable in this browser.');}
+}
+document.getElementById('saveDraft').onclick=saveDraft;
+document.getElementById('saveDraftToolbar').onclick=saveDraft;
+document.getElementById('newDraft').onclick=()=>{if(!confirm('Start a blank draft? Unsaved changes will remain only if already saved.'))return;activeDraftId=null;Object.assign(state,{slots:Array.from({length:5},blankSlot),title:'',pageDescription:'',draftName:''});render();setStatus('New blank draft.');};
+document.getElementById('loadDraft').onclick=()=>renderDrafts().then(()=>setStatus('Choose a draft from the Drafts list.'));
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 document.getElementById('exportDraft').onclick=()=>{const blob=new Blob([JSON.stringify({version:1,app:'Artifact Guide Builder',state},null,2)],{type:'application/json'});downloadBlob(blob,(state.title||'artifact-guide-draft').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')+'.json');setStatus('Draft downloaded.');};
-document.getElementById('draftFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!imported.state||!Array.isArray(imported.state.slots))throw Error();const slots=imported.state.slots.slice(0,5).map(s=>({name:'',description:'',image:null,imageName:'',...s}));while(slots.length<5)slots.push({name:'',description:'',image:null,imageName:''});Object.assign(state,imported.state,{slots});render();setStatus('Draft imported.');}catch{setStatus('That draft file could not be opened.');}e.target.value='';};
+document.getElementById('draftFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const imported=JSON.parse(await file.text());if(!imported.state||!Array.isArray(imported.state.slots))throw Error();Object.assign(state,normalizeDraftState(imported.state));activeDraftId=null;render();setStatus('Draft imported.');}catch{setStatus('That draft file could not be opened.');}e.target.value='';};
 
 // PNG export: draw the supplied template plus the five user images and text onto a 1024x1536 canvas.
 function fitText(ctx,text,maxWidth,font){ctx.font=font; if(ctx.measureText(text).width<=maxWidth)return text; let s=text;while(s.length>1&&ctx.measureText(s+'…').width>maxWidth)s=s.slice(0,-1);return s+'…';}
@@ -219,5 +284,6 @@ page.addEventListener('dragover',e=>e.preventDefault());page.addEventListener('d
 
 // Load the bundled text list so filename matching stays automatic without exposing the list UI.
 artifactListReady=fetch('all_items_names_and_descriptions.txt').then(r=>{if(!r.ok)throw Error();return r.text();}).then(text=>{state.items=parseArtifactList(text,'all_items_names_and_descriptions.txt');render();setStatus(`Ready — automatic matching is active for ${state.items.length} artifacts.`);}).catch(()=>fetch('artifacts.json').then(r=>r.json()).then(data=>{state.items=data;render();setStatus(`Ready — automatic matching is active for ${data.length} artifacts.`);}).catch(()=>{render();setStatus('Ready. Add an image with a matching artifact filename.');}));
+renderDrafts();
 </script>
 </body></html>
