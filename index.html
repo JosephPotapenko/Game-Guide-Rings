@@ -38,7 +38,6 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
     <button class="btn" id="addImages" type="button">Add Artifact Images</button>
     <input id="imageFiles" type="file" accept="image/*" multiple hidden>
     <button class="btn" id="saveDraftToolbar">Save Draft</button>
-    <button class="btn" id="loadDraft">Load Draft</button>
     <button class="btn primary" id="exportPng">Export PNG</button>
   </div>
 </header>
@@ -254,10 +253,8 @@ async function saveDraft(){
 document.getElementById('saveDraft').onclick=saveDraft;
 document.getElementById('saveDraftToolbar').onclick=saveDraft;
 document.getElementById('newDraft').onclick=()=>{if(!confirm('Start a blank draft? Unsaved changes will remain only if already saved.'))return;activeDraftId=null;Object.assign(state,{slots:Array.from({length:5},blankSlot),title:'',pageDescription:'',draftName:''});render();setStatus('New blank draft.');};
-document.getElementById('loadDraft').onclick=()=>renderDrafts().then(()=>setStatus('Choose a draft from the Drafts list.'));
 
 // PNG export: draw the supplied template plus the five user images and text onto a 1024x1536 canvas.
-function fitText(ctx,text,maxWidth,font){ctx.font=font; if(ctx.measureText(text).width<=maxWidth)return text; let s=text;while(s.length>1&&ctx.measureText(s+'…').width>maxWidth)s=s.slice(0,-1);return s+'…';}
 function textLines(ctx,text,maxWidth,font,maxLines){
   ctx.font=font;
   const lines=[];
@@ -287,26 +284,57 @@ function textLines(ctx,text,maxWidth,font,maxLines){
 function drawTextLines(ctx,text,x,y,maxWidth,font,lineHeight,maxLines){
   textLines(ctx,text,maxWidth,font,maxLines).forEach((line,index)=>ctx.fillText(line,x,y+index*lineHeight));
 }
+function canvasFont(style,scale){
+  const weight=style.fontWeight||'normal',fontStyle=style.fontStyle||'normal';
+  const size=(parseFloat(style.fontSize)||16)*scale;
+  return `${fontStyle} ${weight} ${size}px ${style.fontFamily}`;
+}
+function elementBox(element,pageRect,scale){
+  const rect=element.getBoundingClientRect();
+  return {
+    x:(rect.left-pageRect.left)*scale,
+    y:(rect.top-pageRect.top)*scale,
+    width:rect.width*scale,
+    height:rect.height*scale
+  };
+}
+function drawField(ctx,element,pageRect,scale){
+  const style=getComputedStyle(element),box=elementBox(element,pageRect,scale);
+  const font=canvasFont(style,scale),fontSize=(parseFloat(style.fontSize)||16)*scale;
+  const lineHeight=(parseFloat(style.lineHeight)||fontSize/scale*1.2)*scale;
+  const paddingLeft=(parseFloat(style.paddingLeft)||0)*scale;
+  const paddingTop=(parseFloat(style.paddingTop)||0)*scale;
+  const text=element.value||'';
+  ctx.font=font;ctx.fillStyle=style.color;ctx.textBaseline='top';
+  ctx.textAlign=style.textAlign||'left';
+  let x=box.x+paddingLeft;
+  if(ctx.textAlign==='center')x=box.x+box.width/2;
+  if(ctx.textAlign==='right')x=box.x+box.width-paddingLeft;
+  const isSingleLine=element.tagName==='INPUT';
+  const y=isSingleLine?box.y+(box.height-fontSize)/2:box.y+paddingTop;
+  const maxLines=isSingleLine?1:Math.max(1,Math.floor((box.height-paddingTop)/lineHeight));
+  drawTextLines(ctx,text,x,y,box.width-paddingLeft*2,font,lineHeight,maxLines);
+}
+async function drawArtifactImage(ctx,element,pageRect,scale){
+  const src=element.getAttribute('src');
+  if(!src)return;
+  const image=await loadImg(src),box=elementBox(element,pageRect,scale);
+  const fit=Math.min(box.width/image.naturalWidth,box.height/image.naturalHeight);
+  const width=image.naturalWidth*fit,height=image.naturalHeight*fit;
+  ctx.drawImage(image,box.x+(box.width-width)/2,box.y+(box.height-height)/2,width,height);
+}
 async function exportPNG(){
  setStatus('Preparing PNG…');
  const c=document.createElement('canvas');c.width=1024;c.height=1536;const ctx=c.getContext('2d');
  const bg=await loadImg(templateUrl);ctx.drawImage(bg,0,0,1024,1536);
- // Title
- ctx.fillStyle='#301b0e';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 italic 25px "Times New Roman", Georgia, serif';ctx.fillText(state.title||'',512,139,470);
- ctx.font='15px "Times New Roman", Georgia, serif';drawTextLines(ctx,state.pageDescription,512,151,760,ctx.font,18,2);
- const pos=[
-  {ix:95.2,iy:344.8,iw:163.8,ih:141.3,nx:389,ny:307,dx:317,dy:371,dw:480},
-  {ix:739.3,iy:562.2,iw:163.8,ih:141.3,nx:383,ny:554,dx:317,dy:613,dw:405},
-  {ix:96.3,iy:784.9,iw:163.8,ih:141.3,nx:400,ny:760,dx:317,dy:818,dw:480},
-  {ix:736.3,iy:1013.8,iw:163.8,ih:141.3,nx:388,ny:1009,dx:332,dy:1060,dw:405},
-  {ix:98.3,iy:1245.3,iw:163.8,ih:141.3,nx:425,ny:1224,dx:363,dy:1283,dw:480}
- ];
- for(let i=0;i<5;i++){
-  const s=state.slots[i],p=pos[i];
-  if(s.image){const im=await loadImg(s.image);const scale=Math.min(p.iw/im.naturalWidth,p.ih/im.naturalHeight);const w=im.naturalWidth*scale,h=im.naturalHeight*scale;ctx.drawImage(im,p.ix+(p.iw-w)/2,p.iy+(p.ih-h)/2,w,h);}
-  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillStyle='#301b0e';ctx.font='700 italic 20px "Times New Roman", Georgia, serif';ctx.fillText(fitText(ctx,s.name,p.dw,ctx.font),p.nx,p.ny);
-  ctx.font='16px "Times New Roman", Georgia, serif';drawTextLines(ctx,s.description,p.dx,p.dy,p.dw,ctx.font,18,5);
+ const pageRect=page.getBoundingClientRect(),scale=1024/pageRect.width;
+ for(let i=1;i<=5;i++){
+   await drawArtifactImage(ctx,document.querySelector(`.art[data-slot="${i}"]`),pageRect,scale);
+   drawField(ctx,document.querySelector(`.name[data-slot="${i}"]`),pageRect,scale);
+   drawField(ctx,document.querySelector(`.desc[data-slot="${i}"]`),pageRect,scale);
  }
+ drawField(ctx,document.getElementById('titleField'),pageRect,scale);
+ drawField(ctx,document.getElementById('pageDescriptionField'),pageRect,scale);
  const a=document.createElement('a');a.download=(state.title||'artifact-guide').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'')+'.png';a.href=c.toDataURL('image/png');a.click();setStatus('PNG exported.');
 }
 function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});}
