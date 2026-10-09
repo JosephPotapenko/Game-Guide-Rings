@@ -73,7 +73,7 @@ label{display:block;font-size:12px;color:#d8c09b;margin:10px 0 5px} input[type=t
   </section>
 </main>
 <script>
-const blankSlot=()=>({name:'',description:'',image:null,imageName:''});
+const blankSlot=()=>({name:'',description:'',image:null,imageName:'',matchedName:'',matchedDescription:'',nameEdited:false,descriptionEdited:false});
 const state={items:[],slots:Array.from({length:5},blankSlot),title:'',pageDescription:'',draftName:''};
 const page=document.getElementById('page'), statusEl=document.getElementById('status');
 let artifactListReady=Promise.resolve();
@@ -181,17 +181,51 @@ function renderSlotControls(){
   });
   wrap.querySelectorAll('[data-name]').forEach(x=>x.addEventListener('input',e=>{state.slots[+e.target.dataset.name].name=e.target.value;syncCanvasFields();}));
   wrap.querySelectorAll('[data-desc]').forEach(x=>x.addEventListener('input',e=>{state.slots[+e.target.dataset.desc].description=e.target.value;syncCanvasFields();}));
-  wrap.querySelectorAll('[data-clear]').forEach(x=>x.onclick=()=>{const i=+x.dataset.clear;state.slots[i]={name:'',description:'',image:null,imageName:''};render();});
+  wrap.querySelectorAll('[data-clear]').forEach(x=>x.onclick=()=>{const i=+x.dataset.clear;state.slots[i]=blankSlot();render();});
   wrap.querySelectorAll('.drop').forEach(drop=>{
     const i=+drop.dataset.drop; drop.addEventListener('dragover',e=>{e.preventDefault()}); drop.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadImageIntoSlot(f,i);}); drop.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>inp.files[0]&&loadImageIntoSlot(inp.files[0],i);inp.click();};
   });
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function hasManualFormatting(value){return /[\r\n]/.test(value||'')||/[ \t]{2,}/.test(value||'');}
+function shouldRefreshDescription(slot,match){
+  if(!match)return false;
+  if(slot.nameEdited||slot.descriptionEdited)return false;
+  if(hasManualFormatting(slot.name)||hasManualFormatting(slot.description))return false;
+  const expectedName=match.proposedName||match.name;
+  if(slot.matchedName&&slot.name!==slot.matchedName)return false;
+  if(!slot.matchedName&&slot.name&&slot.name!==expectedName&&slot.name!==match.name)return false;
+  if(slot.matchedDescription&&slot.description!==slot.matchedDescription)return false;
+  return true;
+}
 async function loadImageIntoSlot(file,i){
  await artifactListReady;
  const url=await fileToData(file); const match=itemMatch(file.name);
- state.slots[i].image=url;state.slots[i].imageName=file.name;
- if(match){state.slots[i].name=match.proposedName||match.name;state.slots[i].description=match.description;setStatus(`Matched “${state.slots[i].name}” from ${file.name}`);}else{setStatus(`Image added: ${file.name}. No artifact-list match was found.`);}
+ const slot=state.slots[i];
+ slot.image=url;slot.imageName=file.name;
+ if(match){
+   const expectedName=match.proposedName||match.name;
+   const refreshDescription=shouldRefreshDescription(slot,match);
+   const nameWasEdited=slot.nameEdited||hasManualFormatting(slot.name)||
+     (slot.matchedName?slot.name!==slot.matchedName:
+       Boolean(slot.name&&slot.name!==expectedName&&slot.name!==match.name));
+   const descriptionWasEdited=slot.descriptionEdited||hasManualFormatting(slot.description)||
+     Boolean(slot.matchedDescription&&slot.description!==slot.matchedDescription);
+   slot.name=expectedName;
+   if(refreshDescription){
+     slot.description=match.description;
+     slot.descriptionEdited=false;
+   }else{
+     slot.descriptionEdited=descriptionWasEdited||nameWasEdited;
+   }
+   slot.nameEdited=nameWasEdited;
+   slot.matchedName=expectedName;
+   if(refreshDescription)slot.matchedDescription=match.description;
+   setStatus(`Matched “${slot.name}” from ${file.name}`);
+ }else{
+   slot.matchedName='';slot.matchedDescription='';
+   setStatus(`Image added: ${file.name}. No artifact-list match was found.`);
+ }
  render();
 }
 function fileToData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
