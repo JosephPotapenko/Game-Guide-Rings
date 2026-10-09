@@ -190,12 +190,15 @@ function renderSlotControls(){
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function hasManualFormatting(value){return /[\r\n]/.test(value||'')||/[ \t]{2,}/.test(value||'');}
 function shouldRefreshDescription(slot,match){
-  if(!match)return false;
-  if(slot.nameEdited||slot.descriptionEdited)return false;
-  if(hasManualFormatting(slot.name)||hasManualFormatting(slot.description))return false;
-  const expectedName=match.proposedName||match.name;
-  if(slot.matchedName&&slot.name!==slot.matchedName)return false;
-  if(slot.matchedDescription&&slot.description!==slot.matchedDescription)return false;
+  return Boolean(match&&((slot.description||'').match(/\r?\n/g)||[]).length<=2);
+}
+function refreshSavedSlot(slot){
+  if(!slot.imageName)return false;
+  const match=itemMatch(slot.imageName);
+  if(!shouldRefreshDescription(slot,match))return false;
+  slot.description=match.description;
+  slot.matchedName=match.proposedName||match.name;
+  slot.matchedDescription=match.description;
   return true;
 }
 async function loadImageIntoSlot(file,i){
@@ -266,7 +269,19 @@ async function renderDrafts(){
       req.result.sort((a,b)=>b.saved.localeCompare(a.saved)).forEach(d=>{
         const el=document.createElement('div');el.className='draft';
         el.innerHTML=`<div><b>${esc(d.name)}</b><small>${new Date(d.saved).toLocaleString()}</small></div><div><button type="button" title="Open">Open</button><button type="button" title="Delete">×</button></div>`;
-        el.querySelector('button').onclick=()=>{Object.assign(state,normalizeDraftState(d.state));activeDraftId=d.id;render();setStatus(`Loaded “${d.name}”.`);};
+        el.querySelector('button').onclick=async()=>{
+          await artifactListReady;
+          Object.assign(state,normalizeDraftState(d.state));
+          const updated=state.slots.filter(refreshSavedSlot).length;
+          activeDraftId=d.id;
+          if(updated){
+            const update=db.transaction('drafts','readwrite');
+            update.objectStore('drafts').put({...d,state:normalizeDraftState(state)});
+            update.onerror=()=>setStatus(`Loaded “${d.name}”, but the updated descriptions could not be saved.`);
+          }
+          render();
+          setStatus(updated?`Loaded “${d.name}” with ${updated} updated description${updated===1?'':'s'}.`:`Loaded “${d.name}”.`);
+        };
         el.querySelectorAll('button')[1].onclick=async()=>{if(!confirm('Delete this draft?'))return;const del=db.transaction('drafts','readwrite');del.objectStore('drafts').delete(d.id);del.oncomplete=()=>{if(activeDraftId===d.id)activeDraftId=null;renderDrafts();};};
         list.appendChild(el);
       });
