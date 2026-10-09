@@ -87,11 +87,12 @@ function itemMatch(filename){
   const n=norm(base);
   let best=null, bestScore=0;
   for(const it of state.items){
-    const k=norm(it.name);
-    if(!k) continue;
-    const exact=n===k, contains=n.includes(k), rev=k.includes(n)&&n.length>5;
-    if(exact) return it;
-    if(contains || rev){ const score=k.length/(n.length+1); if(score>bestScore){best=it;bestScore=score;} }
+    const keys=[it.name,it.proposedName||it.displayName].map(norm).filter(Boolean);
+    for(const k of keys){
+      const exact=n===k, contains=n.includes(k), rev=k.includes(n)&&n.length>5;
+      if(exact) return it;
+      if(contains || rev){ const score=k.length/(n.length+1); if(score>bestScore){best=it;bestScore=score;} }
+    }
   }
   return best;
 }
@@ -194,7 +195,6 @@ function shouldRefreshDescription(slot,match){
   if(hasManualFormatting(slot.name)||hasManualFormatting(slot.description))return false;
   const expectedName=match.proposedName||match.name;
   if(slot.matchedName&&slot.name!==slot.matchedName)return false;
-  if(!slot.matchedName&&slot.name&&slot.name!==expectedName&&slot.name!==match.name)return false;
   if(slot.matchedDescription&&slot.description!==slot.matchedDescription)return false;
   return true;
 }
@@ -207,11 +207,10 @@ async function loadImageIntoSlot(file,i){
    const expectedName=match.proposedName||match.name;
    const refreshDescription=shouldRefreshDescription(slot,match);
    const nameWasEdited=slot.nameEdited||hasManualFormatting(slot.name)||
-     (slot.matchedName?slot.name!==slot.matchedName:
-       Boolean(slot.name&&slot.name!==expectedName&&slot.name!==match.name));
+     Boolean(slot.matchedName&&slot.name!==slot.matchedName);
    const descriptionWasEdited=slot.descriptionEdited||hasManualFormatting(slot.description)||
      Boolean(slot.matchedDescription&&slot.description!==slot.matchedDescription);
-   slot.name=expectedName;
+   if(!nameWasEdited)slot.name=expectedName;
    if(refreshDescription){
      slot.description=match.description;
      slot.descriptionEdited=false;
