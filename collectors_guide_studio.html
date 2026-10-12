@@ -243,16 +243,20 @@ async function exportImage() {
   });
   const wrapText = (text, maxWidth, font) => {
     context.font = font;
-    return text.split('\n').flatMap(line => {
-      const words = line.split(/\s+/).filter(Boolean), lines = [];
+    return String(text).replace(/\r\n?/g, '\n').split('\n').flatMap(paragraph => {
+      if (!paragraph) return [''];
+      const lines = [];
       let current = '';
-      words.forEach(word => {
-        const candidate = current ? `${current} ${word}` : word;
+      paragraph.split(/(\s+)/).forEach(part => {
+        const candidate = current + part;
         if (current && context.measureText(candidate).width > maxWidth) {
-          lines.push(current); current = word;
-        } else current = candidate;
+          lines.push(current);
+          current = part.trimStart();
+        } else {
+          current = candidate;
+        }
       });
-      if (current || !lines.length) lines.push(current);
+      lines.push(current);
       return lines;
     });
   };
