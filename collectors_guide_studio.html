@@ -50,18 +50,25 @@ h1{font-family:Georgia,serif;font-weight:600;font-size:clamp(28px,4vw,42px);marg
 .statusline{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#d4c0a2;font-size:12px;margin:11px 4px 0}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8ed2a0;margin-right:6px}
 .dot.unsaved{background:#e6b05f}
-.panel{background:linear-gradient(150deg,#f8ecd5,#e9d4ad);color:#4c3019;border:1px solid #c9a878;border-radius:14px;padding:18px;box-shadow:0 8px 22px #0002}
-.panel h2{font:600 22px Georgia,serif;margin:0 0 7px}
-.panel-intro{font-size:13px;line-height:1.5;color:#6f5a43;margin:0 0 15px}
+.panel{background:linear-gradient(180deg,#342218,#1d130d);color:#f4ead9;border:1px solid #63442b;border-radius:14px;padding:18px;box-shadow:0 8px 22px #0006}
+.panel h2{font:600 22px Georgia,serif;margin:0 0 7px;color:#f2d49a}
+.panel-intro{font-size:13px;line-height:1.5;color:#bca58b;margin:0 0 15px}
+.panel button{border-color:#705037;background:linear-gradient(#493020,#302016);color:#f6e8d0}
+.panel button:hover{border-color:#a57949;background:#513522}
+.panel button.primary{background:linear-gradient(#b58a4d,#7d5b32);color:#1d120b;border-color:#d3aa69}
+.panel button.primary:hover{background:linear-gradient(#c49a5b,#8c6739)}
+.panel button.danger{color:#f2b5a5}
 .control-group{margin:13px 0}
-.control-group label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:6px}
-.control-group input,.control-group select{width:100%;border:1px solid #cbb28c;border-radius:8px;padding:10px;background:#fffaf0;color:#43290f}
+.control-group label{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;color:#c9ae87;margin-bottom:6px}
+.control-group input,.control-group select{width:100%;border:1px solid #61452f;border-radius:8px;padding:10px;background:#19100b;color:#f6ead7}
 .row-buttons{display:flex;gap:8px;flex-wrap:wrap}
 .row-buttons button{flex:1}
-.rule{border:0;border-top:1px solid #d3bc96;margin:17px 0}
-.tip{font-size:12px;line-height:1.55;color:#6f5a43}
+.rule{border:0;border-top:1px solid #5b3e29;margin:17px 0}
+.tip{font-size:12px;line-height:1.55;color:#bca58b}
 .file-input{display:none}
-#draftList{width:100%;border:1px solid #cbb28c;border-radius:8px;padding:10px;background:#fffaf0;color:#43290f}
+#draftList{width:100%;border:1px solid #61452f;border-radius:8px;padding:10px;background:#19100b;color:#f6ead7}
+#saveStatus{color:#bca58b}
+#saveStatus .dot{margin-left:2px}
 #debugToggle[aria-pressed="true"]{background:#9a6a2c;color:white}
 .debug .hotspot{border:1px dashed rgba(170,40,20,.75);background:rgba(255,60,30,.07)}
 .debug .hotspot::placeholder{color:rgba(76,38,13,.6)}
@@ -113,6 +120,7 @@ h1{font-family:Georgia,serif;font-weight:600;font-size:clamp(28px,4vw,42px);marg
     <input class="file-input" id="imageFile" type="file" accept="image/*">
     <input class="file-input" id="jsonFile" type="file" accept=".json,application/json">
     <div class="control-group"><label>ARTIFACT IMAGE</label><div class="row-buttons"><button id="imageBtn" type="button">Import / change</button><button id="removeImageBtn" type="button">Remove image</button></div></div>
+    <div class="statusline"><span id="saveStatus">Ready</span><span><span id="saveDot" class="dot"></span>Browser draft storage</span></div>
   </aside>
 </div>
 </div>
@@ -228,10 +236,13 @@ function setStatus(message, unsaved=false) {
   $('saveStatus').textContent = message;
   $('saveDot').classList.toggle('unsaved', unsaved);
 }
+function draftState(draft) {
+  return draft && (draft.state || draft.data) || {};
+}
 async function refreshDraftList(selectId='') {
   const drafts = await readDrafts(), select = $('draftList');
   select.replaceChildren();
-  const entries = drafts.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const entries = drafts.sort((a,b) => String(b.saved || b.updatedAt || '').localeCompare(String(a.saved || a.updatedAt || '')));
   if (!entries.length) { const opt = document.createElement('option'); opt.value=''; opt.textContent='No saved drafts yet'; select.append(opt); return; }
   entries.forEach(draft => { const opt=document.createElement('option'); opt.value=draft.id; opt.textContent=draft.name || 'Untitled draft'; select.append(opt); });
   if (selectId && entries.some(draft => draft.id === selectId)) select.value=selectId;
@@ -242,7 +253,7 @@ function autoSave() {
     try {
       const id = activeDraftId || 'autosave';
       const old = (await readDrafts()).find(draft => draft.id === id) || {};
-      await writeDraft({ ...old, id, name: old.name || (id === 'autosave' ? 'Quick autosave' : 'Untitled draft'), updatedAt: Date.now(), data: collectData(), isAutoSave: id === 'autosave' });
+      await writeDraft({ ...old, id, name: old.name || (id === 'autosave' ? 'Quick autosave' : 'Untitled draft'), saved: new Date().toISOString(), state: collectData(), isAutoSave: id === 'autosave' });
       await refreshDraftList(id); setStatus('Autosaved in this browser');
     } catch (error) { showToast('Browser storage is unavailable. Export a JSON backup.'); }
   }, 450);
@@ -251,7 +262,7 @@ async function saveDraft(asNew=false) {
   const name = $('draftName').value.trim() || 'Untitled guide';
   let id = (!asNew && activeDraftId && activeDraftId !== 'autosave') ? activeDraftId : 'draft-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
   try {
-    await writeDraft({id, name, updatedAt:Date.now(), data:collectData(), isAutoSave:false});
+    await writeDraft({id, name, saved:new Date().toISOString(), state:collectData(), isAutoSave:false});
     activeDraftId=id; await refreshDraftList(id); setStatus('Saved: ' + name); showToast('Draft saved');
   } catch (error) { showToast('Draft could not be saved. Export a JSON backup.'); }
 }
@@ -259,7 +270,7 @@ async function loadSelected() {
   const id = $('draftList').value, draft = (await readDrafts()).find(item => item.id === id);
   if (!draft) { showToast('Choose a saved draft first'); return; }
   if (!confirm('Load "' + (draft.name || 'Untitled guide') + '"? This replaces the current canvas.')) return;
-  activeDraftId = id; applyData(draft.data || {}); $('draftName').value = draft.name || '';
+  activeDraftId = id; applyData(draftState(draft)); $('draftName').value = draft.name || '';
   setStatus('Loaded: ' + (draft.name || 'Untitled guide')); showToast('Draft loaded');
 }
 function downloadJSON(data, filename) {
@@ -381,13 +392,13 @@ $('deleteDraftBtn').addEventListener('click',()=>{
     });
   }).catch(()=>showToast('Saved drafts could not be read.'));
 });
-$('exportBtn').addEventListener('click',()=>downloadJSON({format:'collectors-guide-studio',version:2,name:$('draftName').value.trim()||'Collector’s Guide',exportedAt:new Date().toISOString(),data:collectData()},safeFilename($('draftName').value)+'.json'));
+$('exportBtn').addEventListener('click',()=>downloadJSON({version:1,app:'Collector Guide Studio',name:$('draftName').value.trim()||'Collector’s Guide',state:collectData()},safeFilename($('draftName').value)+'.json'));
 $('exportImageBtn').addEventListener('click', exportImage);
 $('importBtn').addEventListener('click',()=>jsonFile.click());
 jsonFile.addEventListener('change',()=>{
   const file=jsonFile.files && jsonFile.files[0]; if(!file)return;
   const reader=new FileReader();
-  reader.onload=()=>{try{const parsed=JSON.parse(reader.result); const data=parsed.data || parsed; if(typeof data!=='object'||data===null)throw Error(); applyData(data); $('draftName').value=parsed.name||file.name.replace(/\.json$/i,''); activeDraftId=''; autoSave(); showToast('Guide imported');}catch{showToast('Could not read that JSON guide file');}};
+  reader.onload=()=>{try{const parsed=JSON.parse(reader.result); const data=parsed.state || parsed.data || parsed; if(typeof data!=='object'||data===null)throw Error(); applyData(data); $('draftName').value=parsed.name||file.name.replace(/\.json$/i,''); activeDraftId=''; autoSave(); showToast('Guide imported');}catch{showToast('Could not read that JSON guide file');}};
   reader.readAsText(file); jsonFile.value='';
 });
 function chooseImage(){imageFile.click();}
@@ -430,8 +441,8 @@ window.addEventListener('beforeunload',()=>{clearTimeout(autoSaveTimer);});
   try {
     await migrateLegacyDrafts();
     const draftsAtStart=await readDrafts();
-    const latest=draftsAtStart.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];
-    if(latest && latest.data){applyData(latest.data);activeDraftId=latest.id==='autosave'?'':latest.id;$('draftName').value=latest.name||'';setStatus('Restored previous work');}
+    const latest=draftsAtStart.sort((a,b)=>String(b.saved||b.updatedAt||'').localeCompare(String(a.saved||a.updatedAt||'')))[0];
+    if(latest && (latest.state || latest.data)){applyData(draftState(latest));activeDraftId=latest.id==='autosave'?'':latest.id;$('draftName').value=latest.name||'';setStatus('Restored previous work');}
     await refreshDraftList(activeDraftId || 'autosave');
   } catch (error) {
     showToast('Browser draft storage is unavailable. Export a JSON backup.');
